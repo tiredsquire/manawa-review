@@ -1,0 +1,10 @@
+-- Migrasi: dukung multi-pilih aspek pada review (Option B).
+-- review.kategori kini bisa menyimpan beberapa nama dipisah koma
+-- (mis. "Rasa, Pelayanan"), sehingga kolomnya dilebarkan 60 -> 255.
+--
+-- Jalankan SEKALI pada database yang sudah ada:
+--   mysql -u <user> -p <nama_db> < database/migrate_kategori_varchar255.sql
+-- (Instalasi baru via schema.sql sudah memakai VARCHAR(255), tak perlu ini.)
+
+ALTER TABLE review
+  MODIFY kategori VARCHAR(255) NOT NULL COMMENT 'snapshot nama kategori (boleh multi, dipisah koma)';
