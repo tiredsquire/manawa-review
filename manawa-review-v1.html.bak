@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manawa Review — v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-serif: 'Instrument Serif', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    --canvas: #F7F7F6;
+    --surface: #FDFDFC;
+    --inset: #EFEFEE;
+    --text: #1C1C1A;
+    --text-2: #6A6A66;
+    --text-3: #8A8A86;
+    --border-subtle: #EAEAE8;
+    --border: #E3E3E1;
+    --border-strong: #D2D2CF;
+
+    --accent: #1E6F5C;        /* PLACEHOLDER — Manawa's product accent goes here */
+    --accent-hover: #185C4C;
+    --accent-subtle: #E6F0ED;
+    --accent-contrast: #FDFDFC;
+
+    --disabled-surface: #EFEFEE;
+    --disabled-text: #B4B4B0;
+    --error: #CF3030;
+    --error-subtle: #F8E9E8;
+
+    --shadow-sm: 0 1px 2px rgba(20,20,19,.06);
+    --shadow-md: 0 4px 12px rgba(20,20,19,.08);
+
+    --r-control: 8px;
+    --r-card: 16px;
+    --r-pill: 999px;
+
+    --panel-w: 400px;
+    --panel-h: 440px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --canvas: #141413;
+      --surface: #1E1E1C;
+      --inset: #0F0F0E;
+      --text: #F2F2F0;
+      --text-2: #A8A8A3;
+      --text-3: #7A7A75;
+      --border-subtle: #262624;
+      --border: #33332F;
+      --border-strong: #45453F;
+      --accent: #34A085;
+      --accent-hover: #45B89A;
+      --accent-subtle: #16322B;
+      --accent-contrast: #141413;
+      --disabled-surface: #1E1E1C;
+      --disabled-text: #56564F;
+      --error: #F07171;
+      --error-subtle: #2E1515;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.5);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-sans);
+    color: var(--text);
+    background: var(--canvas);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); }
+  .serif { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.01em; line-height: 1.15; }
+  .mono { font-family: var(--font-mono); }
+
+  /* top nav (role-aware) */
+  .topnav {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .topnav .brand { margin-right: 8px; }
+  .topnav .nav-items { display: flex; gap: 6px; }
+  .topnav button {
+    font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+    border: 1px solid transparent; background: transparent;
+    color: var(--text-2); padding: 6px 12px; border-radius: var(--r-control);
+    cursor: pointer; transition: background .2s, color .2s;
+  }
+  .topnav button:hover { background: var(--inset); }
+  .topnav button.on { background: var(--accent-subtle); color: var(--accent); }
+  .topnav .right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .topnav .account { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
+
+  .stage { flex: 1; display: flex; justify-content: center; padding: 0 16px; }
+  .view { display: none; width: 100%; }
+  .view.active { display: block; }
+  #view-kiosk.active { display: flex; align-items: center; justify-content: center; }
+  #view-auth.active { display: block; }
+
+  /* ---- auth: pemilih tenant ---- */
+  .auth-screen-v { display: none; }
+  .auth-screen-v.active { display: block; animation: fade-up .3s ease both; }
+  #auth-nim.active, #auth-admin.active { display: flex; align-items: center; justify-content: center; min-height: 70vh; }
+  .auth-head { text-align: center; margin: 48px 0 28px; }
+  .auth-title { font-size: 46px; margin: 6px 0 0; }
+  .tenant-search {
+    display: block; width: 100%; max-width: 720px; margin: 0 auto 32px; height: 52px;
+    border-radius: var(--r-card); border: 1px solid var(--border); background: var(--surface);
+    font-size: 15px; padding: 0 18px; box-shadow: var(--shadow-sm);
+  }
+  .tenant-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 16px; max-width: 1120px; margin: 0 auto; padding-bottom: 16px;
+  }
+  .tcard {
+    cursor: pointer; border: 1px solid var(--border); border-radius: var(--r-card);
+    background: var(--surface); overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: var(--shadow-sm); transition: transform .18s, border-color .18s, box-shadow .18s;
+  }
+  .tcard:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: var(--shadow-md); }
+  .tcard:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-subtle); }
+  .tcard-ava {
+    height: 150px; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-size: 52px; letter-spacing: .02em; color: var(--text-2);
+    background: radial-gradient(120% 120% at 50% 0%, var(--inset), var(--surface));
+  }
+  .tcard-ava.sm { height: 56px; width: 56px; min-width: 56px; border-radius: var(--r-control);
+    font-size: 22px; border: 1px solid var(--border-subtle); background: var(--inset); }
+  .tcard .nm {
+    padding: 13px 16px; font-weight: 600; font-size: 14px; color: var(--text);
+    border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .tcard .nm .typ { flex: 0 0 auto; }
+  .auth-foot { text-align: center; margin: 36px 0 56px; }
+  .link-admin {
+    background: none; border: none; cursor: pointer; font-family: var(--font-mono);
+    font-size: 13px; letter-spacing: .04em; color: var(--text-2);
+    text-decoration: underline; text-underline-offset: 4px; padding: 8px;
+  }
+  .link-admin:hover { color: var(--accent); }
+  .nim-panel { width: var(--panel-w); max-width: 100%; display: flex; flex-direction: column; gap: 14px; }
+  .nim-panel .btn-back { align-self: flex-start; height: 32px; padding: 0 10px; margin-bottom: 2px; }
+  .nim-tenant { display: flex; align-items: center; gap: 14px; }
+
+  /* ---- logo tenant ---- */
+  .logo-img { width: 100%; height: 100%; object-fit: contain; display: block; padding: 8%; background: var(--surface); }
+  .ava-box { display: flex; align-items: center; justify-content: center; border-radius: var(--r-control);
+    background: var(--inset); border: 1px solid var(--border-subtle); font-family: var(--font-serif);
+    color: var(--text-2); overflow: hidden; flex: 0 0 auto; }
+  .ava-box.s32 { width: 34px; height: 34px; font-size: 14px; }
+  .ava-box.s44 { width: 48px; height: 48px; font-size: 18px; }
+  .ready-logo { width: 104px; height: 104px; border-radius: var(--r-card); }
+
+  /* line-icon emote faces */
+  .face { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; display: block; }
+  .face .eye { fill: currentColor; stroke: none; }
+
+  /* fixed-size panel — same box for auth and every kiosk step */
+  .panel-frame {
+    width: var(--panel-w);
+    max-width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-card);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+  }
+  .screen { display: none; flex-direction: column; gap: 16px; height: var(--panel-h); }
+  .screen.active { display: flex; }
+
+  .auth-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .authpanel { display: flex; flex-direction: column; gap: 14px; }
+  .auth-demo { font-size: 12px; color: var(--text-3); text-align: center; line-height: 1.7; max-width: var(--panel-w); }
+
+  .top { display: flex; align-items: center; justify-content: space-between; min-height: 20px; }
+  .pill { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); border: 1px solid var(--border); border-radius: var(--r-pill); padding: 2px 8px; }
+  .label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .caption { font-size: 12px; color: var(--text-2); }
+  .hint { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+  .grow { flex: 1; }
+  .center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; flex: 1; }
+  .stack-mid { display: flex; flex-direction: column; gap: 12px; justify-content: center; flex: 1; }
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+
+  select, textarea, input {
+    width: 100%; font-family: var(--font-sans); font-size: 14px;
+    border: 1px solid var(--border); border-radius: var(--r-control);
+    background: var(--surface); color: var(--text); padding: 0 12px; height: 40px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  textarea { resize: none; min-height: 100px; padding: 10px 12px; height: auto; line-height: 1.5; }
+  select:focus-visible, textarea:focus-visible, input:focus-visible { outline: none; border-color: var(--border-strong); box-shadow: 0 0 0 2px var(--accent-subtle); }
+  textarea::placeholder, input::placeholder { color: var(--text-3); }
+
+  .auth-error { font-size: 12px; color: var(--error); background: var(--error-subtle); border-radius: var(--r-control); padding: 8px 11px; }
+
+  .btn {
+    font-family: var(--font-sans); font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    border-radius: var(--r-control); padding: 0 16px; height: 40px;
+    transition: transform .12s, background .2s, border-color .2s;
+  }
+  .btn:hover { background: var(--inset); }
+  .btn:active { transform: scale(.96); }
+  .btn.primary { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn.ghost { background: transparent; border-color: transparent; color: var(--text-2); }
+  .btn.ghost:hover { background: var(--inset); color: var(--text); }
+  .btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-subtle); }
+
+  .emotes { display: flex; gap: 10px; width: 100%; }
+  .emote {
+    flex: 1; cursor: pointer; color: var(--text-2);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-control);
+    padding: 16px 4px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: border-color .2s, background .2s, color .2s;
+  }
+  .emote:hover { border-color: var(--border-strong); }
+  .emote .cap { font-size: 12px; }
+  .emote.sel { border-color: var(--accent); background: var(--accent-subtle); color: var(--accent); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    cursor: pointer; font-family: var(--font-sans); font-size: 13px; font-weight: 500; color: var(--text);
+    border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-control); padding: 7px 12px;
+    transition: border-color .2s, background .2s, color .2s;
+  }
+  .chip:hover { border-color: var(--border-strong); }
+  .chip.sel { border-color: var(--accent); background: var(--accent-subtle); color: var(--accent); }
+
+  .chosen { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); }
+
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+  .pulsing { animation: pulse 1.1s ease-in-out infinite; }
+
+  /* dashboards */
+  .dash { max-width: 720px; margin: 0 auto; padding: 32px 0 64px; }
+  .dhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+  .dtitle { font-family: var(--font-serif); font-weight: 400; font-size: 30px; letter-spacing: -0.01em; line-height: 1.15; margin: 0; }
+  .dsub { margin-top: 4px; }
+  select.inline { width: auto; min-width: 160px; }
+
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .metric { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-control); box-shadow: var(--shadow-sm); padding: 14px 16px; }
+  .metric .k { font-size: 12px; color: var(--text-2); }
+  .metric .v { font-family: var(--font-mono); font-weight: 500; font-size: 24px; margin-top: 2px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--shadow-sm); margin-bottom: 24px; overflow: hidden; }
+  .panel > h3 { font-family: var(--font-sans); font-size: 15px; font-weight: 600; margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--border-subtle); }
+  .panel .body { padding: 20px; }
+
+  .bars { display: flex; flex-direction: column; gap: 12px; }
+  .bar { display: flex; align-items: center; gap: 12px; color: var(--text-2); }
+  .bar .cap { font-size: 13px; width: 52px; }
+  .bar .track { flex: 1; height: 8px; background: var(--inset); border-radius: var(--r-pill); overflow: hidden; }
+  .bar .fill { height: 100%; background: var(--accent); border-radius: var(--r-pill); }
+  .bar .n { font-family: var(--font-mono); font-size: 13px; color: var(--text); width: 32px; text-align: right; }
+
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: background .2s; }
+  .row:last-child { border-bottom: 0; }
+  .row:hover { background: var(--inset); }
+  .row .meta { display: flex; align-items: center; gap: 8px; }
+  .row .tname { font-size: 14px; font-weight: 500; }
+  .typ { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-2); border: 1px solid var(--border); border-radius: var(--r-pill); padding: 2px 7px; }
+  .row .dist { display: flex; align-items: center; gap: 14px; }
+  .row .dist .d { display: flex; align-items: center; gap: 5px; color: var(--text-2); font-family: var(--font-mono); font-size: 13px; }
+  .row .dist .tot { font-family: var(--font-mono); font-size: 13px; width: 34px; text-align: right; color: var(--text); }
+
+  .comment { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-2); }
+  .comment:first-child { padding-top: 0; }
+  .comment:last-child { border-bottom: 0; padding-bottom: 0; }
+  .comment .meta { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap; }
+  .comment .who { font-family: var(--font-sans); font-size: 12px; font-weight: 500; color: var(--text); }
+  .comment .cat { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); border: 1px solid var(--border); border-radius: var(--r-pill); padding: 1px 7px; }
+  .comment .time { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+  .comment .text { font-size: 13px; color: var(--text); }
+  .empty { font-size: 13px; color: var(--text-3); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<nav id="topnav" class="topnav" style="display:none">
+  <span class="brand eyebrow">Manawa</span>
+  <div class="nav-items" id="nav-items"></div>
+  <div class="right">
+    <span class="account" id="nav-account"></span>
+    <button class="btn ghost" style="height:32px" onclick="logout()">Keluar</button>
+  </div>
+</nav>
+
+<div class="stage">
+
+  <!-- ============ AUTH (pilih tenant → NIM) ============ -->
+  <div id="view-auth" class="view active">
+
+    <!-- screen: pemilih tenant -->
+    <div id="auth-picker" class="auth-screen-v active">
+      <div class="auth-head">
+        <div class="eyebrow">Manawa Festival</div>
+        <h1 class="serif auth-title">Pilih tenant</h1>
+      </div>
+      <input id="tenant-search" class="tenant-search" type="text" placeholder="Cari tenant…" oninput="filterTenants()" autocomplete="off">
+      <div id="tenant-grid" class="tenant-grid"></div>
+      <div id="tenant-empty" class="empty" style="display:none;text-align:center;margin-top:24px">Tenant tidak ditemukan.</div>
+      <div class="auth-foot">
+        <button class="link-admin" onclick="showAuth('auth-admin')">Masuk sebagai panitia</button>
+      </div>
+    </div>
+
+    <!-- screen: input NIM penjual -->
+    <div id="auth-nim" class="auth-screen-v">
+      <div class="panel-frame nim-panel">
+        <button class="btn ghost btn-back" onclick="showAuth('auth-picker')">← Kembali</button>
+        <div class="nim-tenant">
+          <div id="nim-ava" class="tcard-ava sm">··</div>
+          <div>
+            <div id="nim-name" class="label" style="font-size:16px">Tenant</div>
+            <div class="caption">Masukkan NIM ketua tim untuk masuk</div>
+          </div>
+        </div>
+        <div class="field-group">
+          <span class="label">NIM Ketua Tim</span>
+          <input id="nim-input" type="password" inputmode="numeric" placeholder="••••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')sellerLogin()">
+        </div>
+        <div id="nim-error" class="auth-error" style="display:none">NIM salah.</div>
+        <button class="btn primary" onclick="sellerLogin()">Masuk</button>
+      </div>
+    </div>
+
+    <!-- screen: login panitia -->
+    <div id="auth-admin" class="auth-screen-v">
+      <div class="panel-frame nim-panel">
+        <button class="btn ghost btn-back" onclick="showAuth('auth-picker')">← Kembali</button>
+        <div class="eyebrow">Manawa Festival</div>
+        <h2 class="serif" style="font-size:26px;margin:2px 0 4px">Masuk panitia</h2>
+        <div class="field-group">
+          <span class="label">Kata sandi panitia</span>
+          <input id="admin-pass" type="password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')adminLogin()">
+        </div>
+        <div id="admin-error" class="auth-error" style="display:none">Kata sandi salah.</div>
+        <button class="btn primary" onclick="adminLogin()">Masuk</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ KIOSK ============ -->
+  <div id="view-kiosk" class="view">
+    <div class="panel-frame">
+
+      <section id="s-ready" class="screen active">
+        <div class="top"><span class="eyebrow" id="ready-tenant">Tenant</span></div>
+        <div class="center">
+          <span style="color:var(--text-3)" id="ready-face"></span>
+          <div style="display:inline-flex;flex-direction:column;gap:12px">
+            <div class="serif" style="font-size:26px">Beri ulasan tenant kami</div>
+            <button class="btn primary" onclick="show('s-emote')">Mulai ulasan</button>
+            <div class="caption" style="text-align:center">Ketuk untuk mulai</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="s-emote" class="screen">
+        <div class="top"><span class="eyebrow">Langkah 1 dari 3</span></div>
+        <h3 style="font-size:18px;font-weight:600;margin:0">Bagaimana pengalamanmu?</h3>
+        <div class="grow" style="display:flex;align-items:center">
+          <div class="emotes" id="emote-row"></div>
+        </div>
+        <button class="btn ghost" onclick="show('s-ready')">Kembali</button>
+      </section>
+
+      <section id="s-category" class="screen">
+        <div class="top"><span class="eyebrow">Langkah 2 dari 3</span></div>
+        <div class="chosen" id="cat-chosen"></div>
+        <div class="label">Pilih satu aspek</div>
+        <div class="chips" id="chip-row"></div>
+        <div class="hint" id="cat-hint"></div>
+        <button class="btn ghost" style="margin-top:auto" onclick="show('s-emote')">Kembali</button>
+      </section>
+
+      <section id="s-comment" class="screen">
+        <div class="top"><span class="eyebrow">Langkah 3 dari 3</span></div>
+        <div class="label">Komentar <span style="color:var(--text-3);font-weight:400">(opsional)</span></div>
+        <textarea id="comment-text" placeholder="Tulis di sini…"></textarea>
+        <div class="hint">Boleh dikosongkan.</div>
+        <button class="btn primary" style="margin-top:auto" onclick="submitReview()">Kirim</button>
+      </section>
+
+      <section id="s-saving" class="screen">
+        <div class="center">
+          <span class="pulsing" style="color:var(--text-3)" id="saving-face"></span>
+          <div class="caption">Menyimpan ulasan…</div>
+        </div>
+      </section>
+
+      <section id="s-success" class="screen">
+        <div class="center">
+          <span style="color:var(--accent)" id="success-face"></span>
+          <div class="serif" style="font-size:28px">Terima kasih!</div>
+          <div class="caption">Ulasan terkirim</div>
+          <div class="hint">Layar kembali ke awal…</div>
+        </div>
+      </section>
+
+      <section id="s-error" class="screen">
+        <div class="center">
+          <span style="color:var(--error)" id="error-face"></span>
+          <div class="serif" style="font-size:26px">Gagal mengirim</div>
+          <div class="caption">Ulasanmu masih tersimpan. Coba kirim lagi.</div>
+          <button class="btn primary" style="width:80%;margin-top:4px" onclick="submitReview()">Coba lagi</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ============ SELLER DASHBOARD ============ -->
+  <div id="view-seller" class="view">
+    <div class="dash">
+      <div class="dhead">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div id="seller-ava" class="ava-box s44">··</div>
+          <div><h1 class="dtitle" id="seller-name">Tenant</h1><div class="dsub eyebrow">Dashboard tenant</div></div>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="k">Total ulasan</div><div class="v" id="seller-total">0</div></div>
+        <div class="metric"><div class="k">Bagus</div><div class="v" id="seller-good">0%</div></div>
+        <div class="metric"><div class="k">Komentar</div><div class="v" id="seller-cmt">0</div></div>
+      </div>
+      <div class="panel"><h3>Distribusi emote</h3><div class="body"><div class="bars" id="seller-bars"></div></div></div>
+      <div class="panel"><h3>Komentar</h3><div class="body" id="seller-comments"></div></div>
+    </div>
+  </div>
+
+  <!-- ============ ADMIN DASHBOARD ============ -->
+  <div id="view-admin" class="view">
+    <div class="dash">
+      <div class="dhead">
+        <div><h1 class="dtitle">Admin · Semua tenant</h1><div class="dsub eyebrow">Manawa Festival</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button id="admin-back" class="btn ghost" style="height:36px;display:none;align-items:center;gap:4px" onclick="adminClear()">← Semua tenant</button>
+          <select id="admin-filter" class="inline" onchange="renderAdmin()"></select>
+        </div>
+      </div>
+      <div class="panel"><h3>Per tenant</h3><div id="admin-rows"></div></div>
+      <div class="panel"><h3>Komentar terbaru</h3><div class="body" id="admin-comments"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ============ Konfigurasi & data statik UI ============
+  const API = 'api/';                       // endpoint relatif (folder /api)
+  const TYPE_LABEL = { fnb: 'F&B', non_fnb: 'Non-F&B' };
+  const EMOTES = [
+    { id: 'senyum', label: 'Bagus'  },
+    { id: 'datar',  label: 'Cukup'  },
+    { id: 'sedih',  label: 'Kurang' },
+  ];
+  // ============ Helper API ============
+  async function apiGet(path) {
+    const res = await fetch(API + path);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data;
+  }
+  async function apiPost(path, body) {
+    const res = await fetch(API + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data;
+  }
+
+  // ============ Util tampilan ============
+  function faceSVG(mood, size) {
+    const mouth = { senyum: 'M8 13.5 Q12 17.5 16 13.5', datar: 'M8.5 15 L15.5 15', sedih: 'M8 16 Q12 12.5 16 16' }[mood];
+    return '<svg class="face" viewBox="0 0 24 24" width="' + size + '" height="' + size + '" aria-hidden="true">' +
+      '<circle cx="12" cy="12" r="9"/><circle class="eye" cx="9" cy="10" r="1.1"/>' +
+      '<circle class="eye" cx="15" cy="10" r="1.1"/><path d="' + mouth + '"/></svg>';
+  }
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function ago(ts) {
+    // ts = MySQL datetime 'YYYY-MM-DD HH:MM:SS'
+    const t = new Date(String(ts).replace(' ', 'T')).getTime();
+    const min = Math.round((Date.now() - t) / 60000);
+    if (!isFinite(min)) return '';
+    if (min < 1) return 'baru saja';
+    if (min < 60) return min + ' mnt';
+    return Math.round(min / 60) + ' jam';
+  }
+
+  // ============ State sesi ============
+  let session = null;                       // { role, email, tenant:{slug,name,type,spot} }
+  let draft = { emote: null, category: null };
+  let adminTenants = [];                     // cache daftar tenant utk filter admin
+  let pickerTenants = [];                    // daftar tenant utk pemilih login
+  let pickedSlug = null;                     // tenant yang dipilih di layar NIM
+
+  // ============ Auth: pemilih tenant ============
+  function initials(name) {
+    const words = String(name).trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return '··';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  }
+
+  // isi avatar: <img> logo bila ada, kalau tidak inisial
+  function avatarInner(t) {
+    if (t && t.logo) return '<img class="logo-img" src="' + escapeHTML(t.logo) + '" alt="' + escapeHTML(t.name || '') + '">';
+    return escapeHTML(initials(t ? t.name : ''));
+  }
+
+  function showAuth(id) {
+    document.querySelectorAll('#view-auth .auth-screen-v').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+    if (id === 'auth-nim') setTimeout(() => document.getElementById('nim-input').focus(), 50);
+    if (id === 'auth-admin') setTimeout(() => document.getElementById('admin-pass').focus(), 50);
+  }
+
+  async function loadPicker() {
+    const grid = document.getElementById('tenant-grid');
+    try {
+      const data = await apiGet('tenant_list.php');
+      pickerTenants = data.tenants || [];
+    } catch (e) {
+      grid.innerHTML = '<div class="empty">Gagal memuat daftar tenant.</div>';
+      return;
+    }
+    renderPicker(pickerTenants);
+  }
+
+  function renderPicker(list) {
+    const grid = document.getElementById('tenant-grid');
+    document.getElementById('tenant-empty').style.display = list.length ? 'none' : 'block';
+    grid.innerHTML = list.map(t =>
+      '<div class="tcard" tabindex="0" role="button" onclick="pickTenant(\'' + t.slug + '\')" ' +
+      'onkeydown="if(event.key===\'Enter\')pickTenant(\'' + t.slug + '\')">' +
+      '<div class="tcard-ava">' + avatarInner(t) + '</div>' +
+      '<div class="nm"><span>' + escapeHTML(t.name) + '</span>' +
+      '<span class="typ">' + TYPE_LABEL[t.type] + '</span></div></div>'
+    ).join('');
+  }
+
+  function filterTenants() {
+    const q = document.getElementById('tenant-search').value.trim().toLowerCase();
+    renderPicker(q ? pickerTenants.filter(t => t.name.toLowerCase().includes(q)) : pickerTenants);
+  }
+
+  function pickTenant(slug) {
+    const t = pickerTenants.find(x => x.slug === slug);
+    if (!t) return;
+    pickedSlug = slug;
+    document.getElementById('nim-ava').innerHTML = avatarInner(t);
+    document.getElementById('nim-name').textContent = t.name;
+    document.getElementById('nim-input').value = '';
+    document.getElementById('nim-error').style.display = 'none';
+    showAuth('auth-nim');
+  }
+
+  // ---- auth: login ----
+  async function sellerLogin() {
+    const pass = document.getElementById('nim-input').value.trim();
+    const err = document.getElementById('nim-error');
+    try {
+      const data = await apiPost('login.php', { slug: pickedSlug, password: pass });
+      session = { role: data.role, email: data.email, tenant: data.tenant };
+      err.style.display = 'none';
+      buildNav();
+      go('kiosk');
+    } catch (e) {
+      err.textContent = e.message || 'NIM salah.';
+      err.style.display = 'block';
+    }
+  }
+
+  async function adminLogin() {
+    const pass = document.getElementById('admin-pass').value;
+    const err = document.getElementById('admin-error');
+    try {
+      const data = await apiPost('login.php', { admin: true, password: pass });
+      session = { role: data.role, email: data.email, tenant: data.tenant };
+      err.style.display = 'none';
+      buildNav();
+      go('admin');
+    } catch (e) {
+      err.textContent = e.message || 'Kata sandi salah.';
+      err.style.display = 'block';
+    }
+  }
+
+  async function logout() {
+    try { await apiPost('logout.php', {}); } catch (_) {}
+    session = null;
+    document.getElementById('admin-pass').value = '';
+    document.getElementById('nim-input').value = '';
+    buildNav();
+    showView('auth');
+    showAuth('auth-picker');
+    document.getElementById('tenant-search').value = '';
+    renderPicker(pickerTenants);
+  }
+
+  function buildNav() {
+    const nav = document.getElementById('topnav');
+    if (!session) { nav.style.display = 'none'; return; }
+    nav.style.display = 'flex';
+    const items = session.role === 'seller' || session.role === 'penjual'
+      ? [['kiosk', 'Kios'], ['seller', 'Dashboard']]
+      : [['admin', 'Dashboard admin']];
+    document.getElementById('nav-items').innerHTML = items.map(([v, l]) =>
+      '<button data-view="' + v + '" onclick="go(\'' + v + '\')">' + l + '</button>').join('');
+    document.getElementById('nav-account').textContent =
+      session.tenant ? session.tenant.name : (session.role === 'admin' ? 'Panitia' : session.email);
+  }
+
+  // ---- view routing ----
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+  function go(view) {
+    showView(view);
+    document.querySelectorAll('#nav-items button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+    if (view === 'kiosk') bindKiosk();
+    if (view === 'seller') renderSeller();
+    if (view === 'admin') initAdmin();
+  }
+
+  // ---- kiosk ----
+  function show(id) {
+    document.querySelectorAll('#view-kiosk .screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+  function bindKiosk() {
+    draft = { emote: null, category: null };
+    document.getElementById('ready-tenant').textContent = session.tenant ? session.tenant.name : 'Tenant';
+    const rf = document.getElementById('ready-face');
+    if (session.tenant && session.tenant.logo) {
+      rf.innerHTML = '<div class="ready-logo ava-box">' + avatarInner(session.tenant) + '</div>';
+    } else {
+      rf.innerHTML = faceSVG('senyum', 48);
+    }
+    show('s-ready');
+  }
+  async function pickEmote(id) {
+    draft.emote = id;
+    const e = EMOTES.find(x => x.id === id);
+    const t = session.tenant;
+    document.getElementById('cat-chosen').innerHTML = faceSVG(id, 20) + '<span>' + e.label + ' — pilih aspeknya</span>';
+    document.getElementById('cat-hint').textContent = 'Daftar mengikuti tipe tenant (' + TYPE_LABEL[t.type] + ').';
+    document.getElementById('chip-row').innerHTML = '<span class="hint">Memuat…</span>';
+    show('s-category');
+    try {
+      const data = await apiGet('categories.php?tipe=' + encodeURIComponent(t.type));
+      document.getElementById('chip-row').innerHTML = data.categories.map(c =>
+        '<span class="chip" onclick="pickCategory(\'' + c.replace(/'/g, "\\'") + '\')">' + escapeHTML(c) + '</span>').join('');
+    } catch (err) {
+      document.getElementById('chip-row').innerHTML = '<span class="hint">Gagal memuat kategori.</span>';
+    }
+  }
+  function pickCategory(c) {
+    draft.category = c;
+    document.getElementById('comment-text').value = '';
+    show('s-comment');
+  }
+  async function submitReview() {
+    const comment = document.getElementById('comment-text').value.trim();
+    show('s-saving');
+    try {
+      await apiPost('reviews.php', { emote: draft.emote, kategori: draft.category, komentar: comment });
+      show('s-success');
+      setTimeout(() => { draft = { emote: null, category: null }; show('s-ready'); }, 1600);
+    } catch (e) {
+      show('s-error');
+    }
+  }
+
+  // ---- dashboards ----
+  function barsHTML(c) {
+    const total = c.senyum + c.datar + c.sedih || 1;
+    return EMOTES.map(e => {
+      const n = c[e.id], pct = Math.round((n / total) * 100);
+      return '<div class="bar">' + faceSVG(e.id, 20) + '<span class="cap">' + e.label + '</span>' +
+        '<div class="track"><div class="fill" style="width:' + pct + '%"></div></div><span class="n">' + n + '</span></div>';
+    }).join('');
+  }
+  function commentHTML(r, withTenant) {
+    if (!r.komentar) return '';
+    const who = withTenant ? '<span class="who">' + escapeHTML(r.name) + '</span>' : '';
+    return '<div class="comment">' + faceSVG(r.emote, 18) + '<div style="flex:1">' +
+      '<div class="meta">' + who + '<span class="cat">' + escapeHTML(r.kategori) + '</span>' +
+      '<span class="time" style="margin-left:auto">' + ago(r.at) + '</span></div>' +
+      '<div class="text">' + escapeHTML(r.komentar) + '</div></div></div>';
+  }
+
+  async function renderSeller() {
+    document.getElementById('seller-name').textContent = session.tenant ? session.tenant.name : 'Tenant';
+    document.getElementById('seller-ava').innerHTML = avatarInner(session.tenant);
+    let data;
+    try { data = await apiGet('dashboard.php'); }
+    catch (e) { document.getElementById('seller-comments').innerHTML = '<div class="empty">Gagal memuat data.</div>'; return; }
+
+    const t = data.tenants[0] || { counts: { senyum: 0, datar: 0, sedih: 0 }, total: 0 };
+    const c = t.counts, total = t.total;
+    const good = total ? Math.round((c.senyum / total) * 100) : 0;
+    const cmts = data.comments;
+    document.getElementById('seller-total').textContent = total;
+    document.getElementById('seller-good').textContent = good + '%';
+    document.getElementById('seller-cmt').textContent = cmts.length;
+    document.getElementById('seller-bars').innerHTML = barsHTML(c);
+    document.getElementById('seller-comments').innerHTML =
+      cmts.length ? cmts.map(r => commentHTML(r, false)).join('') : '<div class="empty">Belum ada komentar.</div>';
+  }
+
+  function adminClear() {
+    document.getElementById('admin-filter').value = 'all';
+    renderAdmin();
+  }
+
+  async function initAdmin() {
+    if (!adminTenants.length) {
+      try {
+        const data = await apiGet('tenants.php');
+        adminTenants = data.tenants;
+        document.getElementById('admin-filter').innerHTML = '<option value="all">Semua tenant</option>' +
+          adminTenants.map(t => '<option value="' + t.slug + '">' + escapeHTML(t.name) + ' · ' + TYPE_LABEL[t.type] + '</option>').join('');
+      } catch (_) {}
+    }
+    renderAdmin();
+  }
+
+  async function renderAdmin() {
+    const filter = document.getElementById('admin-filter').value || 'all';
+    document.getElementById('admin-back').style.display = filter === 'all' ? 'none' : 'inline-flex';
+    let data;
+    try { data = await apiGet('dashboard.php?tenant=' + encodeURIComponent(filter)); }
+    catch (e) { document.getElementById('admin-rows').innerHTML = '<div class="body empty">Gagal memuat data.</div>'; return; }
+
+    document.getElementById('admin-rows').innerHTML = data.tenants.map(t => {
+      const tc = t.counts;
+      return '<div class="row" onclick="document.getElementById(\'admin-filter\').value=\'' + t.slug + '\';renderAdmin()">' +
+        '<div class="meta"><span class="ava-box s32">' + avatarInner(t) + '</span>' +
+        '<span class="tname">' + escapeHTML(t.name) + '</span><span class="typ">' + TYPE_LABEL[t.type] + '</span></div>' +
+        '<div class="dist"><span class="d">' + faceSVG('senyum', 15) + tc.senyum + '</span>' +
+        '<span class="d">' + faceSVG('datar', 15) + tc.datar + '</span>' +
+        '<span class="d">' + faceSVG('sedih', 15) + tc.sedih + '</span>' +
+        '<span class="tot">' + t.total + '</span></div></div>';
+    }).join('') || '<div class="body empty">Belum ada tenant.</div>';
+
+    const cmts = data.comments.slice(0, 6);
+    document.getElementById('admin-comments').innerHTML =
+      cmts.length ? cmts.map(r => commentHTML(r, true)).join('') : '<div class="empty">Belum ada komentar.</div>';
+  }
+
+  // ============ Init ============
+  (async function init() {
+    loadPicker();   // muat daftar tenant utk layar login
+    document.getElementById('emote-row').innerHTML = EMOTES.map(e =>
+      '<div class="emote" onclick="pickEmote(\'' + e.id + '\')">' + faceSVG(e.id, 40) + '<span class="cap">' + e.label + '</span></div>').join('');
+    document.getElementById('ready-face').innerHTML = faceSVG('senyum', 48);
+    document.getElementById('saving-face').innerHTML = faceSVG('datar', 36);
+    document.getElementById('success-face').innerHTML = faceSVG('senyum', 44);
+    document.getElementById('error-face').innerHTML = faceSVG('sedih', 40);
+
+    // Pulihkan sesi bila masih login (cookie PHP aktif).
+    try {
+      const s = await apiGet('session.php');
+      if (s.authenticated) {
+        session = { role: s.role, email: s.email, tenant: s.tenant };
+        buildNav();
+        go(session.role === 'admin' ? 'admin' : 'kiosk');
+      }
+    } catch (_) {}
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<?php
+/** GET /api/tenants.php — daftar tenant (untuk filter admin). Khusus admin. */
+require __DIR__ . '/config.php';
+require_method('GET');
+
+$akun = require_login();
+if ($akun['role'] !== 'admin') {
+    json_out(['error' => 'Khusus admin'], 403);
+}
+
+$rows = db()->query('SELECT slug, nama_bisnis, tipe FROM tenant ORDER BY nama_bisnis')->fetchAll();
+
+json_out(['tenants' => array_map(fn($t) => [
+    'slug' => $t['slug'],
+    'name' => $t['nama_bisnis'],
+    'type' => $t['tipe'],
+], $rows)]);

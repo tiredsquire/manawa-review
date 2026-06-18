@@ -1,0 +1,13 @@
+<?php
+/** GET /api/tenant_list.php — daftar tenant publik untuk layar login (slug, nama, tipe). */
+require __DIR__ . '/config.php';
+require_method('GET');
+
+$rows = db()->query('SELECT slug, nama_bisnis, tipe, logo_url FROM tenant ORDER BY nama_bisnis')->fetchAll();
+
+json_out(['tenants' => array_map(fn($t) => [
+    'slug' => $t['slug'],
+    'name' => $t['nama_bisnis'],
+    'type' => $t['tipe'],
+    'logo' => $t['logo_url'],
+], $rows)]);

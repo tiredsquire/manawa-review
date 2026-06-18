@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manawa Review — Percobaan Elemen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --font-serif:'Instrument Serif',Georgia,serif;
+    --font-sans:'Plus Jakarta Sans',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --canvas:#F7F7F6; --surface:#FDFDFC; --inset:#EFEFEE;
+    --text:#1C1C1A; --text-2:#6A6A66; --text-3:#8A8A86;
+    --border:#E3E3E1; --border-subtle:#EAEAE8;
+    --accent:#B0531F; --accent-subtle:#F9EAE0;
+    --shadow-sm:0 1px 2px rgba(20,20,19,.06);
+    --shadow-md:0 4px 12px rgba(20,20,19,.10);
+    --r-card:16px; --r-control:8px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; font-family:var(--font-sans); color:var(--text);
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+    background:
+      linear-gradient(rgba(247,247,246,.86),rgba(247,247,246,.92)),
+      url("assets/batik-bg.jpg") center/cover fixed, var(--canvas);
+    position:relative; overflow-x:hidden;
+  }
+
+  /* ====== LAPISAN DEKORASI (elemen Manawa) ====== */
+  .decor{position:fixed; pointer-events:none; z-index:0; user-select:none;
+    filter:drop-shadow(0 6px 14px rgba(20,20,19,.10)); }
+  .decor.clouds{ top:0; right:0; width:min(320px,38vw); }
+  .decor.bird{ bottom:0; left:0; width:min(260px,34vw); }
+  .decor.surf{ bottom:0; right:0; width:min(220px,28vw); }
+  .decor.beach{ bottom:0; left:50%; transform:translateX(-50%);
+    width:min(520px,70vw); opacity:.85; }
+  @media (max-width:600px){
+    .decor.beach{ display:none; }
+    .decor.bird{ width:42vw; } .decor.surf{ width:36vw; }
+  }
+
+  .wrap{ position:relative; z-index:1; padding:0 16px; }
+  .badge-exp{
+    position:fixed; top:12px; left:12px; z-index:3;
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--accent); color:#fff; padding:5px 12px; border-radius:999px; box-shadow:var(--shadow-sm);
+  }
+
+  .head{ text-align:center; margin:54px 0 26px; }
+  .head img{ width:128px; max-width:70%; height:auto; display:block; margin:0 auto 2px; }
+  .head h1{ font-family:var(--font-serif); font-weight:400; font-size:48px; margin:6px 0 0; letter-spacing:-.01em; }
+  .search{
+    display:block; width:100%; max-width:720px; margin:0 auto 32px; height:52px;
+    border-radius:var(--r-card); border:1px solid var(--border); background:var(--surface);
+    font-size:15px; padding:0 18px; box-shadow:var(--shadow-sm); color:var(--text-3);
+    display:flex; align-items:center;
+  }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+    gap:16px; max-width:1120px; margin:0 auto; padding-bottom:240px;
+  }
+  @media (max-width:600px){ .grid{ grid-template-columns:repeat(2,1fr); gap:12px; padding-bottom:180px; } }
+  .tcard{
+    border:1px solid var(--border); border-radius:var(--r-card); background:var(--surface);
+    overflow:hidden; display:flex; flex-direction:column; box-shadow:var(--shadow-sm);
+    transition:transform .18s, box-shadow .18s, border-color .18s;
+  }
+  .tcard:hover{ transform:translateY(-3px); border-color:var(--accent); box-shadow:var(--shadow-md); }
+  .ava{ width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(120% 120% at 50% 0%,var(--inset),var(--surface)); }
+  .ava img{ width:100%; height:100%; object-fit:contain; padding:8%; }
+  .nm{ padding:13px 15px 14px; border-top:1px solid var(--border-subtle);
+    display:flex; flex-direction:column; gap:7px; }
+  .nm b{ font-weight:600; font-size:15px; }
+  .typ{ font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--text-3); border:1px solid var(--border-subtle); border-radius:999px; padding:2px 7px; align-self:flex-start; }
+</style>
+</head>
+<body>
+
+  <span class="badge-exp">Percobaan elemen · bukan versi final</span>
+
+  <img class="decor clouds" src="_experiment/clouds.png" alt="">
+  <img class="decor beach"  src="_experiment/beach.png"  alt="">
+  <img class="decor bird"   src="_experiment/bird.png"   alt="">
+  <img class="decor surf"   src="_experiment/surf.png"   alt="">
+
+  <div class="wrap">
+    <div class="head">
+      <img src="assets/logo.png" alt="Manawa Festival 2026">
+      <h1>Pilih tenant</h1>
+    </div>
+    <div class="search">Cari tenant…</div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+<script>
+  const TENANTS = [
+    ['Bilbo Lapis Susu','bilbo-lapis-susu.jpg','F&B'],
+    ['Aurelune','aurelune.jpg','F&B'],
+    ['FeelMeal','feelmeal.png','F&B'],
+    ['Bengal Coffee & Eatery','bengal-coffee-eatery.png','F&B'],
+    ['Fortune Crunch Chicken','fortune-crunch-chicken.jpg','F&B'],
+    ['FLOR de PIEL','flor-de-piel.jpg','Non-F&B'],
+    ['Kopi Jiwapat','kopi-jiwapat.png','F&B'],
+    ['Krazzie','krazzie.png','F&B'],
+    ['Chrome Petal','chrome-petal.png','Non-F&B'],
+    ['Bloobub','bloobub.png','Non-F&B'],
+    ['Daintsy','daintsy.png','Non-F&B'],
+    ['Brewchill','brewchill.jpg','F&B'],
+  ];
+  document.getElementById('grid').innerHTML = TENANTS.map(([n,f,t])=>
+    '<div class="tcard"><div class="ava"><img src="logos/'+f+'?v=3" alt=""></div>'+
+    '<div class="nm"><b>'+n+'</b><span class="typ">'+t+'</span></div></div>').join('');
+</script>
+</body>
+</html>
